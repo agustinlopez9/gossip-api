@@ -5,8 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "init": "ts-node --esm src/init.ts",
-    "dev": "node --env-file=.env.local -r ts-node/register src/index.ts",
+    "dev": "node --env-file=.env -r ts-node/register src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -14,12 +13,14 @@
   "dependencies": {
     "express": "^5.1.0",
     "kysely": "^0.28.5",
+    "kysely-codegen": "^0.19.0",
     "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.0",
     "@types/pg": "^8.15.5",
+    "kysely-ctl": "^0.18.0",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
     "typescript": "^5.9.2"
