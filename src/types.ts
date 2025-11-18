@@ -11,6 +11,28 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface Followers {
+  created_at: Generated<Timestamp>;
+  followed_id: number;
+  follower_id: number;
+  id: Generated<number>;
+}
+
+export interface Likes {
+  created_at: Generated<Timestamp>;
+  id: Generated<number>;
+  post_id: number;
+  user_id: number;
+}
+
+export interface Posts {
+  author_id: number;
+  content: string;
+  created_at: Generated<Timestamp>;
+  id: Generated<number>;
+  title: string;
+}
+
 export interface Users {
   created_at: Generated<Timestamp>;
   email: string;
@@ -21,5 +43,8 @@ export interface Users {
 }
 
 export interface DB {
+  followers: Followers;
+  likes: Likes;
+  posts: Posts;
   users: Users;
 }

@@ -2,6 +2,9 @@ import express from "express";
 import { routes } from "./config/index.ts";
 
 const app = express();
+
+app.use(express.json());
+
 const port = Number(process.env.API_PORT) || 4000;
 routes(app);
 

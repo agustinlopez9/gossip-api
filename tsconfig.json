@@ -3,7 +3,6 @@
   "compilerOptions": {
     // File Layout
     "baseUrl": "src", // base directory for non-relative imports
-    "rootDir": "./src",
     // "outDir": "./dist",
 
     // Environment Settings
