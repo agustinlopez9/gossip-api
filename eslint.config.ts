@@ -11,10 +11,14 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
   },
   ...tseslint.configs.recommended,
+  { files: ["**/migrations/**/*.ts"], rules: { "@typescript-eslint/no-explicit-any": "off" } },
   {
-    files: ["**/migrations/**/*.ts"],
+    files: ["**/middleware/**/*.ts"],
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
 ]);
