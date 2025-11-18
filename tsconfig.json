@@ -39,6 +39,6 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
+    "skipLibCheck": true
   }
 }
