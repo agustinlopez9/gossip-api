@@ -39,6 +39,7 @@ export interface Users {
   first_name: string;
   id: Generated<number>;
   last_name: string | null;
+  password: string;
   username: string;
 }
 
