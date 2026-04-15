@@ -5,12 +5,13 @@ import { db } from "database/database.ts";
 import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
 import { isAuthenticated } from "middleware/auth.ts";
-import type { Users as User } from "types.ts";
+import { authLimiter } from "middleware/rateLimiter.ts";
 
 const router = Router();
 
 router.post(
   "/signup",
+  authLimiter,
   asyncHandler(async (req, res) => {
     const { username, email, first_name, last_name, password } = req.body;
 
@@ -63,7 +64,7 @@ router.post(
   }),
 );
 
-router.post("/login", (req, res, next) => {
+router.post("/login", authLimiter, (req, res, next) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -72,7 +73,7 @@ router.post("/login", (req, res, next) => {
 
   passport.authenticate(
     "local",
-    (err: Error | null, user: User | false, info?: { message?: string }) => {
+    (err: Error | null, user: Express.User | false, info?: { message?: string }) => {
       if (err) {
         return next(err);
       }
@@ -86,12 +87,19 @@ router.post("/login", (req, res, next) => {
           return next(err);
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password: passwordField, ...userWithoutPassword } = user;
+        // Return user without password field
+        const userResponse = {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          created_at: user.created_at,
+        };
 
         return res.json({
           message: "Login successful",
-          user: userWithoutPassword,
+          user: userResponse,
         });
       });
     },
@@ -123,8 +131,7 @@ router.get(
   "/me",
   isAuthenticated,
   asyncHandler(async (req, res) => {
-    const user = req.user as User;
-    const userId = Number(user.id);
+    const userId = req.user!.id;
 
     const currentUser = await db
       .selectFrom("users")

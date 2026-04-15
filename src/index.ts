@@ -1,6 +1,7 @@
 import express from "express";
 import session from "express-session";
 import { errorHandler } from "middleware/errorHandler.ts";
+import { apiLimiter, authenticatedLimiter } from "middleware/rateLimiter.ts";
 import { routes } from "config/index.ts";
 import { sessionConfig } from "config/session.ts";
 import passport from "config/passport.ts";
@@ -15,6 +16,10 @@ app.use(session(sessionConfig));
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Rate limiting middleware
+app.use("/api", apiLimiter); // For unauthenticated users
+app.use("/api", authenticatedLimiter); // For authenticated users (higher limits)
 
 routes(app);
 

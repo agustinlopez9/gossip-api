@@ -3,12 +3,14 @@ import { db } from "database/database.ts";
 import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
 import { isAuthenticated } from "middleware/auth.ts";
+import { createContentLimiter } from "middleware/rateLimiter.ts";
 
 const router = Router();
 
 router.post(
   "/",
   isAuthenticated,
+  createContentLimiter,
   asyncHandler(async (req, res) => {
     const user_id = req.user!.id;
     const post_id = req.body.post_id;

@@ -3,12 +3,14 @@ import { db } from "database/database.ts";
 import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
 import { isAuthenticated } from "middleware/auth.ts";
+import { createContentLimiter } from "middleware/rateLimiter.ts";
 
 const router = Router();
 
 router.post(
   "/",
   isAuthenticated,
+  createContentLimiter,
   asyncHandler(async (req, res) => {
     const follower_id = req.user!.id;
     const followed_id = req.body.followed_id;

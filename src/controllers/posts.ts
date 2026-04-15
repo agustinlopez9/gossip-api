@@ -3,12 +3,14 @@ import { db } from "database/database.ts";
 import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
 import { isAuthenticated } from "middleware/auth.ts";
+import { createContentLimiter } from "middleware/rateLimiter.ts";
 
 const router = Router();
 
 router.post(
   "/",
   isAuthenticated,
+  createContentLimiter,
   asyncHandler(async (req, res) => {
     const title = req.body.title;
     const content = req.body.content;
@@ -60,6 +62,37 @@ router.put(
     await db.updateTable("posts").set(updateData).where("id", "=", postId).execute();
 
     res.status(200).json({ message: "Post updated successfully" });
+  }),
+);
+
+router.delete(
+  "/:id",
+  isAuthenticated,
+  asyncHandler(async (req, res) => {
+    const postId = Number(req.params.id);
+    const userId = req.user!.id;
+
+    if (!postId || isNaN(postId)) {
+      throw new AppError(400, "Missing or invalid Post ID");
+    }
+
+    const post = await db
+      .selectFrom("posts")
+      .where("id", "=", postId)
+      .selectAll()
+      .executeTakeFirst();
+
+    if (!post) {
+      throw new AppError(404, "Post not found");
+    }
+
+    if (post.author_id !== userId) {
+      throw new AppError(403, "You are not authorized to delete this post");
+    }
+
+    await db.deleteFrom("posts").where("id", "=", postId).execute();
+
+    res.status(200).json({ message: "Post deleted successfully" });
   }),
 );
 
