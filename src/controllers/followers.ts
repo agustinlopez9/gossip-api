@@ -2,17 +2,23 @@ import { Router } from "express";
 import { db } from "database/database.ts";
 import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
+import { isAuthenticated } from "middleware/auth.ts";
 
 const router = Router();
 
 router.post(
   "/",
+  isAuthenticated,
   asyncHandler(async (req, res) => {
-    const follower_id = req.body.follower_id;
+    const follower_id = req.user!.id;
     const followed_id = req.body.followed_id;
 
-    if (!follower_id || !followed_id) {
-      throw new AppError(400, "Missing required fields");
+    if (!followed_id) {
+      throw new AppError(400, "Missing required field: followed_id");
+    }
+
+    if (follower_id === followed_id) {
+      throw new AppError(400, "You cannot follow yourself");
     }
 
     await db.insertInto("followers").values({ follower_id, followed_id }).execute();
@@ -52,8 +58,10 @@ router.get(
 
 router.delete(
   "/:id",
+  isAuthenticated,
   asyncHandler(async (req, res) => {
     const followId = Number(req.params.id);
+    const userId = req.user!.id;
 
     if (!followId || isNaN(followId)) {
       throw new AppError(400, "Missing or invalid Follow ID");
@@ -67,6 +75,10 @@ router.delete(
 
     if (!follow) {
       throw new AppError(404, "Follow relationship not found");
+    }
+
+    if (follow.follower_id !== userId) {
+      throw new AppError(403, "You are not authorized to delete this follow relationship");
     }
 
     await db.deleteFrom("followers").where("id", "=", followId).execute();

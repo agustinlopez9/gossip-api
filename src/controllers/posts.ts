@@ -2,17 +2,19 @@ import { Router } from "express";
 import { db } from "database/database.ts";
 import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
+import { isAuthenticated } from "middleware/auth.ts";
 
 const router = Router();
 
 router.post(
   "/",
+  isAuthenticated,
   asyncHandler(async (req, res) => {
     const title = req.body.title;
     const content = req.body.content;
-    const author_id = req.body.author_id;
+    const author_id = req.user!.id;
 
-    if (!title || !content || !author_id) {
+    if (!title || !content) {
       throw new AppError(400, "Missing required fields");
     }
 
@@ -24,10 +26,12 @@ router.post(
 
 router.put(
   "/:id",
+  isAuthenticated,
   asyncHandler(async (req, res) => {
     const postId = Number(req.params.id);
     const title = req.body.title;
     const content = req.body.content;
+    const userId = req.user!.id;
 
     if (!postId || isNaN(postId)) {
       throw new AppError(400, "Missing or invalid Post ID");
@@ -45,6 +49,10 @@ router.put(
 
     if (!post) {
       throw new AppError(404, "Post not found");
+    }
+
+    if (post.author_id !== userId) {
+      throw new AppError(403, "You are not authorized to update this post");
     }
 
     const updateData = { title, content };

@@ -2,17 +2,19 @@ import { Router } from "express";
 import { db } from "database/database.ts";
 import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
+import { isAuthenticated } from "middleware/auth.ts";
 
 const router = Router();
 
 router.post(
   "/",
+  isAuthenticated,
   asyncHandler(async (req, res) => {
-    const user_id = req.body.user_id;
+    const user_id = req.user!.id;
     const post_id = req.body.post_id;
 
-    if (!user_id || !post_id) {
-      throw new AppError(400, "Missing required fields");
+    if (!post_id) {
+      throw new AppError(400, "Missing required field: post_id");
     }
 
     await db.insertInto("likes").values({ user_id, post_id }).execute();
@@ -52,8 +54,10 @@ router.get(
 
 router.delete(
   "/:id",
+  isAuthenticated,
   asyncHandler(async (req, res) => {
     const likeId = Number(req.params.id);
+    const userId = req.user!.id;
 
     if (!likeId || isNaN(likeId)) {
       throw new AppError(400, "Missing or invalid Like ID");
@@ -67,6 +71,10 @@ router.delete(
 
     if (!like) {
       throw new AppError(404, "Like not found");
+    }
+
+    if (like.user_id !== userId) {
+      throw new AppError(403, "You are not authorized to delete this like");
     }
 
     await db.deleteFrom("likes").where("id", "=", likeId).execute();
