@@ -18,6 +18,17 @@ router.post(
     const user_id = req.user!.id;
     const { post_id } = req.body;
 
+    const existingLike = await db
+      .selectFrom("likes")
+      .where("user_id", "=", user_id)
+      .where("post_id", "=", post_id)
+      .selectAll()
+      .executeTakeFirst();
+
+    if (existingLike) {
+      throw new AppError(409, "You have already liked this post");
+    }
+
     await db.insertInto("likes").values({ user_id, post_id }).execute();
 
     res.status(201).json({ message: "Like created successfully" });
@@ -36,7 +47,7 @@ router.get(
   "/:id",
   validate(getLikeSchema),
   asyncHandler(async (req, res) => {
-    const likeId = req.params.id as unknown as number; // Zod transforms to number
+    const likeId = Number(req.params.id);
 
     const like = await db
       .selectFrom("likes")
@@ -55,7 +66,7 @@ router.delete(
   isAuthenticated,
   validate(deleteLikeSchema),
   asyncHandler(async (req, res) => {
-    const likeId = req.params.id as unknown as number; // Zod transforms to number
+    const likeId = Number(req.params.id);
     const userId = req.user!.id;
 
     const like = await db

@@ -9,6 +9,7 @@ import {
   createFollowerSchema,
   getFollowerSchema,
   deleteFollowerSchema,
+  checkFollowerSchema,
 } from "schemas/followers.schema.ts";
 
 const router = Router();
@@ -24,6 +25,17 @@ router.post(
 
     if (follower_id === followed_id) {
       throw new AppError(400, "You cannot follow yourself");
+    }
+
+    const existingFollow = await db
+      .selectFrom("followers")
+      .where("follower_id", "=", follower_id)
+      .where("followed_id", "=", followed_id)
+      .selectAll()
+      .executeTakeFirst();
+
+    if (existingFollow) {
+      throw new AppError(409, "You are already following this user");
     }
 
     await db.insertInto("followers").values({ follower_id, followed_id }).execute();
@@ -44,7 +56,7 @@ router.get(
   "/:id",
   validate(getFollowerSchema),
   asyncHandler(async (req, res) => {
-    const followId = req.params.id as unknown as number; // Zod transforms to number
+    const followId = Number(req.params.id);
 
     const follow = await db
       .selectFrom("followers")
@@ -63,7 +75,7 @@ router.delete(
   isAuthenticated,
   validate(deleteFollowerSchema),
   asyncHandler(async (req, res) => {
-    const followId = req.params.id as unknown as number; // Zod transforms to number
+    const followId = Number(req.params.id);
     const userId = req.user!.id;
 
     const follow = await db
@@ -83,6 +95,30 @@ router.delete(
     await db.deleteFrom("followers").where("id", "=", followId).execute();
 
     res.status(200).json({ message: "Follow relationship deleted successfully" });
+  }),
+);
+
+router.get(
+  "/check/:userId",
+  isAuthenticated,
+  validate(checkFollowerSchema),
+  asyncHandler(async (req, res) => {
+    const targetUserId = Number(req.params.userId);
+    const currentUserId = req.user!.id;
+
+    const followRelationship = await db
+      .selectFrom("followers")
+      .where("follower_id", "=", currentUserId)
+      .where("followed_id", "=", targetUserId)
+      .selectAll()
+      .executeTakeFirst();
+
+    res.json({
+      data: {
+        is_following: !!followRelationship,
+        follow_id: followRelationship?.id || null,
+      },
+    });
   }),
 );
 

@@ -18,4 +18,10 @@ export const deleteFollowerSchema = z.object({
   }),
 });
 
+export const checkFollowerSchema = z.object({
+  params: z.object({
+    userId: z.string().regex(/^\d+$/, "Invalid user ID").transform(Number),
+  }),
+});
+
 export type CreateFollowerInput = z.infer<typeof createFollowerSchema>["body"];

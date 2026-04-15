@@ -44,5 +44,78 @@ export const deletePostSchema = z.object({
   }),
 });
 
+export const getPostsSchema = z.object({
+  query: z.object({
+    author_id: z
+      .string()
+      .regex(/^\d+$/, "Invalid author ID")
+      .transform(Number)
+      .optional(),
+    limit: z
+      .string()
+      .optional()
+      .default("20")
+      .pipe(
+        z
+          .string()
+          .regex(/^\d+$/, "Invalid limit")
+          .transform(Number)
+          .refine((val) => val >= 1 && val <= 100, {
+            message: "Limit must be between 1 and 100",
+          }),
+      ),
+    offset: z
+      .string()
+      .optional()
+      .default("0")
+      .pipe(
+        z
+          .string()
+          .regex(/^\d+$/, "Invalid offset")
+          .transform(Number)
+          .refine((val) => val >= 0, {
+            message: "Offset must be 0 or greater",
+          }),
+      ),
+  }),
+});
+
+export const getPostFeedSchema = z.object({
+  query: z.object({
+    limit: z
+      .string()
+      .optional()
+      .default("20")
+      .pipe(
+        z
+          .string()
+          .regex(/^\d+$/, "Invalid limit")
+          .transform(Number)
+          .refine((val) => val >= 1 && val <= 100, {
+            message: "Limit must be between 1 and 100",
+          }),
+      ),
+    offset: z
+      .string()
+      .optional()
+      .default("0")
+      .pipe(
+        z
+          .string()
+          .regex(/^\d+$/, "Invalid offset")
+          .transform(Number)
+          .refine((val) => val >= 0, {
+            message: "Offset must be 0 or greater",
+          }),
+      ),
+  }),
+});
+
+export const getPostLikesSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^\d+$/, "Invalid post ID").transform(Number),
+  }),
+});
+
 export type CreatePostInput = z.infer<typeof createPostSchema>["body"];
 export type UpdatePostInput = z.infer<typeof updatePostSchema>["body"];
