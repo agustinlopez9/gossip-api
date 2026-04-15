@@ -4,6 +4,8 @@ import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
 import { isAuthenticated } from "middleware/auth.ts";
 import { createContentLimiter } from "middleware/rateLimiter.ts";
+import { validate } from "middleware/validate.ts";
+import { createLikeSchema, getLikeSchema, deleteLikeSchema } from "schemas/likes.schema.ts";
 
 const router = Router();
 
@@ -11,13 +13,10 @@ router.post(
   "/",
   isAuthenticated,
   createContentLimiter,
+  validate(createLikeSchema),
   asyncHandler(async (req, res) => {
     const user_id = req.user!.id;
-    const post_id = req.body.post_id;
-
-    if (!post_id) {
-      throw new AppError(400, "Missing required field: post_id");
-    }
+    const { post_id } = req.body;
 
     await db.insertInto("likes").values({ user_id, post_id }).execute();
 
@@ -35,12 +34,9 @@ router.get(
 
 router.get(
   "/:id",
+  validate(getLikeSchema),
   asyncHandler(async (req, res) => {
-    const likeId = Number(req.params.id);
-
-    if (!likeId || isNaN(likeId)) {
-      throw new AppError(400, "Missing or invalid Like ID");
-    }
+    const likeId = req.params.id as unknown as number; // Zod transforms to number
 
     const like = await db
       .selectFrom("likes")
@@ -57,13 +53,10 @@ router.get(
 router.delete(
   "/:id",
   isAuthenticated,
+  validate(deleteLikeSchema),
   asyncHandler(async (req, res) => {
-    const likeId = Number(req.params.id);
+    const likeId = req.params.id as unknown as number; // Zod transforms to number
     const userId = req.user!.id;
-
-    if (!likeId || isNaN(likeId)) {
-      throw new AppError(400, "Missing or invalid Like ID");
-    }
 
     const like = await db
       .selectFrom("likes")

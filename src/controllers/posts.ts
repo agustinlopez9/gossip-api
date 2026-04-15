@@ -4,6 +4,13 @@ import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
 import { isAuthenticated } from "middleware/auth.ts";
 import { createContentLimiter } from "middleware/rateLimiter.ts";
+import { validate } from "middleware/validate.ts";
+import {
+  createPostSchema,
+  updatePostSchema,
+  getPostSchema,
+  deletePostSchema,
+} from "schemas/posts.schema.ts";
 
 const router = Router();
 
@@ -11,14 +18,10 @@ router.post(
   "/",
   isAuthenticated,
   createContentLimiter,
+  validate(createPostSchema),
   asyncHandler(async (req, res) => {
-    const title = req.body.title;
-    const content = req.body.content;
+    const { title, content } = req.body;
     const author_id = req.user!.id;
-
-    if (!title || !content) {
-      throw new AppError(400, "Missing required fields");
-    }
 
     await db.insertInto("posts").values({ title, content, author_id }).execute();
 
@@ -29,19 +32,11 @@ router.post(
 router.put(
   "/:id",
   isAuthenticated,
+  validate(updatePostSchema),
   asyncHandler(async (req, res) => {
-    const postId = Number(req.params.id);
-    const title = req.body.title;
-    const content = req.body.content;
+    const postId = req.params.id as unknown as number; // Zod transforms to number
+    const { title, content } = req.body;
     const userId = req.user!.id;
-
-    if (!postId || isNaN(postId)) {
-      throw new AppError(400, "Missing or invalid Post ID");
-    }
-
-    if (!title && !content) {
-      throw new AppError(400, "At least one field (title or content) must be provided for update");
-    }
 
     const post = await db
       .selectFrom("posts")
@@ -68,13 +63,10 @@ router.put(
 router.delete(
   "/:id",
   isAuthenticated,
+  validate(deletePostSchema),
   asyncHandler(async (req, res) => {
-    const postId = Number(req.params.id);
+    const postId = req.params.id as unknown as number; // Zod transforms to number
     const userId = req.user!.id;
-
-    if (!postId || isNaN(postId)) {
-      throw new AppError(400, "Missing or invalid Post ID");
-    }
 
     const post = await db
       .selectFrom("posts")
@@ -106,12 +98,9 @@ router.get(
 
 router.get(
   "/:id",
+  validate(getPostSchema),
   asyncHandler(async (req, res) => {
-    const postId = Number(req.params.id);
-
-    if (!postId || isNaN(postId)) {
-      throw new AppError(400, "Missing or invalid Post ID");
-    }
+    const postId = req.params.id as unknown as number; // Zod transforms to number
 
     const post = await db
       .selectFrom("posts")

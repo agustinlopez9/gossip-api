@@ -4,6 +4,12 @@ import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
 import { isAuthenticated } from "middleware/auth.ts";
 import { createContentLimiter } from "middleware/rateLimiter.ts";
+import { validate } from "middleware/validate.ts";
+import {
+  createFollowerSchema,
+  getFollowerSchema,
+  deleteFollowerSchema,
+} from "schemas/followers.schema.ts";
 
 const router = Router();
 
@@ -11,13 +17,10 @@ router.post(
   "/",
   isAuthenticated,
   createContentLimiter,
+  validate(createFollowerSchema),
   asyncHandler(async (req, res) => {
     const follower_id = req.user!.id;
-    const followed_id = req.body.followed_id;
-
-    if (!followed_id) {
-      throw new AppError(400, "Missing required field: followed_id");
-    }
+    const { followed_id } = req.body;
 
     if (follower_id === followed_id) {
       throw new AppError(400, "You cannot follow yourself");
@@ -39,12 +42,9 @@ router.get(
 
 router.get(
   "/:id",
+  validate(getFollowerSchema),
   asyncHandler(async (req, res) => {
-    const followId = Number(req.params.id);
-
-    if (!followId || isNaN(followId)) {
-      throw new AppError(400, "Missing or invalid Follow ID");
-    }
+    const followId = req.params.id as unknown as number; // Zod transforms to number
 
     const follow = await db
       .selectFrom("followers")
@@ -61,13 +61,10 @@ router.get(
 router.delete(
   "/:id",
   isAuthenticated,
+  validate(deleteFollowerSchema),
   asyncHandler(async (req, res) => {
-    const followId = Number(req.params.id);
+    const followId = req.params.id as unknown as number; // Zod transforms to number
     const userId = req.user!.id;
-
-    if (!followId || isNaN(followId)) {
-      throw new AppError(400, "Missing or invalid Follow ID");
-    }
 
     const follow = await db
       .selectFrom("followers")

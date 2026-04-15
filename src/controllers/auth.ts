@@ -6,22 +6,17 @@ import { asyncHandler } from "utils/asyncHandler.ts";
 import { AppError } from "utils/AppError.ts";
 import { isAuthenticated } from "middleware/auth.ts";
 import { authLimiter } from "middleware/rateLimiter.ts";
+import { validate } from "middleware/validate.ts";
+import { signupSchema, loginSchema } from "schemas/auth.schema.ts";
 
 const router = Router();
 
 router.post(
   "/signup",
   authLimiter,
+  validate(signupSchema),
   asyncHandler(async (req, res) => {
     const { username, email, first_name, last_name, password } = req.body;
-
-    if (!username || !email || !first_name || !password) {
-      throw new AppError(400, "Username, email, first name and password are required");
-    }
-
-    if (password.length < 8) {
-      throw new AppError(400, "Password must be at least 8 characters long");
-    }
 
     const existingUser = await db
       .selectFrom("users")
@@ -64,13 +59,7 @@ router.post(
   }),
 );
 
-router.post("/login", authLimiter, (req, res, next) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return next(new AppError(400, "Username and password are required"));
-  }
-
+router.post("/login", authLimiter, validate(loginSchema), (req, res, next) => {
   passport.authenticate(
     "local",
     (err: Error | null, user: Express.User | false, info?: { message?: string }) => {
