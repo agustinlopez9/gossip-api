@@ -1,12 +1,20 @@
 import express from "express";
 import session from "express-session";
-import { errorHandler } from "middleware/errorHandler.ts";
 import { apiLimiter, authenticatedLimiter } from "middleware/rateLimiter.ts";
-import { routes } from "config/index.ts";
-import { sessionConfig } from "config/session.ts";
+import { errorHandler } from "middleware/errorHandler.ts";
+import helmetMiddleware from "config/security.ts";
+import corsMiddleware from "config/cors.ts";
 import passport from "config/passport.ts";
+import { sessionConfig } from "config/session.ts";
+import { routes } from "config/index.ts";
 
 const app = express();
+
+// Security headers middleware
+app.use(helmetMiddleware);
+
+// CORS middleware
+app.use(corsMiddleware);
 
 app.use(express.json());
 

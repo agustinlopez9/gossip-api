@@ -78,6 +78,7 @@ DB_PASSWORD=your_password
 DB_NAME=gossip_api
 API_PORT=3001
 SESSION_SECRET=your_session_secret_here
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
 4. Initialize the database and run migrations
