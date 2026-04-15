@@ -38,6 +38,10 @@ src/
     ├── AppError.ts            # Custom error class
     └── asyncHandler.ts        # Async route wrapper
 ```
+## Database Diagram
+
+<img width="1359" height="512" alt="Untitled" src="https://github.com/user-attachments/assets/f5d53b02-1e3d-4e99-9069-7110e522d4e0" />
+
 
 ## Authentication System
 
