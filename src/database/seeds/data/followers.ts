@@ -1,0 +1,15 @@
+export const followersData = [
+  { followerKey: "alice", followedKey: "bob" },
+  { followerKey: "alice", followedKey: "charlie" },
+  { followerKey: "alice", followedKey: "diana" },
+  { followerKey: "bob", followedKey: "alice" },
+  { followerKey: "bob", followedKey: "charlie" },
+  { followerKey: "charlie", followedKey: "alice" },
+  { followerKey: "charlie", followedKey: "diana" },
+  { followerKey: "charlie", followedKey: "eve" },
+  { followerKey: "diana", followedKey: "alice" },
+  { followerKey: "diana", followedKey: "bob" },
+  { followerKey: "diana", followedKey: "charlie" },
+  { followerKey: "diana", followedKey: "eve" },
+  { followerKey: "eve", followedKey: "alice" },
+];
