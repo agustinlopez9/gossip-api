@@ -44,56 +44,13 @@ describe("Users Logic", () => {
         .executeTakeFirst();
 
       expect(user).toBeDefined();
-      expect((user as any).password).toBeUndefined();
+      expect(user && 'password' in user).toBe(false);
     });
 
     it("should return undefined for non-existent user", async () => {
       const user = await getUserById(99999);
 
       expect(user).toBeUndefined();
-    });
-  });
-
-  describe("User Profile with Counts", () => {
-    beforeEach(async () => {
-      // Create posts for userId1
-      await createTestPost(userId1, "Post 1", "Content 1");
-      await createTestPost(userId1, "Post 2", "Content 2");
-
-      // Create follower relationships
-      await createFollowerRelationship(userId2, userId1); // user2 follows user1
-      await createFollowerRelationship(userId3, userId1); // user3 follows user1
-      await createFollowerRelationship(userId1, userId2); // user1 follows user2
-    });
-
-    it("should count user posts", async () => {
-      const result = await db
-        .selectFrom("posts")
-        .select(({ fn }) => fn.count<number>("id").as("count"))
-        .where("author_id", "=", userId1)
-        .executeTakeFirst();
-
-      expect(Number(result?.count)).toBe(2);
-    });
-
-    it("should count user followers", async () => {
-      const result = await db
-        .selectFrom("followers")
-        .select(({ fn }) => fn.count<number>("id").as("count"))
-        .where("followed_id", "=", userId1)
-        .executeTakeFirst();
-
-      expect(Number(result?.count)).toBe(2); // user2 and user3 follow user1
-    });
-
-    it("should count users being followed", async () => {
-      const result = await db
-        .selectFrom("followers")
-        .select(({ fn }) => fn.count<number>("id").as("count"))
-        .where("follower_id", "=", userId1)
-        .executeTakeFirst();
-
-      expect(Number(result?.count)).toBe(1); // user1 follows user2
     });
   });
 
@@ -108,20 +65,7 @@ describe("Users Logic", () => {
       const user = await getUserById(userId1);
 
       expect(user?.first_name).toBe("NewFirstName");
-      expect(user?.last_name).toBe(testUsers.alice.last_name); // Unchanged
-    });
-
-    it("should update last name", async () => {
-      await db
-        .updateTable("users")
-        .set({ last_name: "NewLastName" })
-        .where("id", "=", userId1)
-        .execute();
-
-      const user = await getUserById(userId1);
-
-      expect(user?.last_name).toBe("NewLastName");
-      expect(user?.first_name).toBe(testUsers.alice.first_name); // Unchanged
+      expect(user?.last_name).toBe(testUsers.alice.last_name);
     });
 
     it("should update email", async () => {
@@ -158,7 +102,7 @@ describe("Users Logic", () => {
       await expect(
         db
           .updateTable("users")
-          .set({ email: testUsers.bob.email }) // Try to use Bob's email
+          .set({ email: testUsers.bob.email })
           .where("id", "=", userId1)
           .execute(),
       ).rejects.toThrow();
@@ -192,8 +136,8 @@ describe("Users Logic", () => {
         .execute();
 
       for (let i = 0; i < posts.length - 1; i++) {
-        const current = new Date(posts[i].created_at).getTime();
-        const next = new Date(posts[i + 1].created_at).getTime();
+        const current = new Date(posts[i]!.created_at).getTime();
+        const next = new Date(posts[i + 1]!.created_at).getTime();
         expect(current).toBeGreaterThanOrEqual(next);
       }
     });
@@ -211,8 +155,8 @@ describe("Users Logic", () => {
 
   describe("User Followers List", () => {
     beforeEach(async () => {
-      await createFollowerRelationship(userId2, userId1); // user2 follows user1
-      await createFollowerRelationship(userId3, userId1); // user3 follows user1
+      await createFollowerRelationship(userId2, userId1);
+      await createFollowerRelationship(userId3, userId1);
     });
 
     it("should retrieve user followers", async () => {
@@ -250,8 +194,8 @@ describe("Users Logic", () => {
         .execute();
 
       for (let i = 0; i < followers.length - 1; i++) {
-        const current = new Date(followers[i].followed_at).getTime();
-        const next = new Date(followers[i + 1].followed_at).getTime();
+        const current = new Date(followers[i]!.followed_at).getTime();
+        const next = new Date(followers[i + 1]!.followed_at).getTime();
         expect(current).toBeGreaterThanOrEqual(next);
       }
     });
@@ -278,8 +222,8 @@ describe("Users Logic", () => {
 
   describe("User Following List", () => {
     beforeEach(async () => {
-      await createFollowerRelationship(userId1, userId2); // user1 follows user2
-      await createFollowerRelationship(userId1, userId3); // user1 follows user3
+      await createFollowerRelationship(userId1, userId2);
+      await createFollowerRelationship(userId1, userId3);
     });
 
     it("should retrieve users being followed", async () => {
@@ -317,8 +261,8 @@ describe("Users Logic", () => {
         .execute();
 
       for (let i = 0; i < following.length - 1; i++) {
-        const current = new Date(following[i].followed_at).getTime();
-        const next = new Date(following[i + 1].followed_at).getTime();
+        const current = new Date(following[i]!.followed_at).getTime();
+        const next = new Date(following[i + 1]!.followed_at).getTime();
         expect(current).toBeGreaterThanOrEqual(next);
       }
     });

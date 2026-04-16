@@ -1,10 +1,16 @@
 import { z } from "zod";
 
-// Sanitized text schema for user input
-const sanitizedTextSchema = z
-  .string()
-  .trim()
-  .transform((val) => val.replace(/<[^>]*>/g, ""));
+// Sanitized text schema factory for user input
+const sanitizedTextSchema = (minLength?: number, maxLength?: number) => {
+  let schema = z.string().trim();
+  if (minLength !== undefined) {
+    schema = schema.min(minLength, `Minimum length is ${minLength}`);
+  }
+  if (maxLength !== undefined) {
+    schema = schema.max(maxLength, `Maximum length is ${maxLength}`);
+  }
+  return schema.transform((val) => val.replace(/<[^>]*>/g, ""));
+};
 
 const emailSchema = z
   .string()
@@ -24,14 +30,8 @@ export const updateUserSchema = z.object({
   }),
   body: z
     .object({
-      first_name: sanitizedTextSchema
-        .min(1, "First name is required")
-        .max(50, "First name must not exceed 50 characters")
-        .optional(),
-      last_name: sanitizedTextSchema
-        .min(1, "Last name is required")
-        .max(50, "Last name must not exceed 50 characters")
-        .optional(),
+      first_name: sanitizedTextSchema(1, 50).optional(),
+      last_name: sanitizedTextSchema(1, 50).optional(),
       email: emailSchema.optional(),
     })
     .refine(

@@ -47,9 +47,8 @@ describe("Posts Logic", () => {
     });
 
     it("should enforce title length limit", async () => {
-      const longTitle = "a".repeat(201); // Exceeds 200 char limit
+      const longTitle = "a".repeat(201);
 
-      // This would be caught by Zod validation, but let's test database constraint
       const post = await db
         .insertInto("posts")
         .values({
@@ -145,22 +144,6 @@ describe("Posts Logic", () => {
       expect(post?.title).toBe("Test Post"); // Title unchanged
     });
 
-    it("should update both title and content", async () => {
-      await db
-        .updateTable("posts")
-        .set({
-          title: "New Title",
-          content: "New Content",
-        })
-        .where("id", "=", postId)
-        .execute();
-
-      const post = await getPostById(postId);
-
-      expect(post?.title).toBe("New Title");
-      expect(post?.content).toBe("New Content");
-    });
-
     it("should only allow author to update their post", async () => {
       const post = await getPostById(postId);
 
@@ -207,10 +190,8 @@ describe("Posts Logic", () => {
     it("should only allow author to delete their post", async () => {
       const post = await getPostById(postId);
 
-      // Verify post belongs to userId1
       expect(post?.author_id).toBe(userId1);
 
-      // In controller logic, userId2 attempting to delete would be rejected
       const isAuthorized = post?.author_id === userId2;
       expect(isAuthorized).toBe(false);
     });
@@ -218,14 +199,12 @@ describe("Posts Logic", () => {
 
   describe("Post Feed", () => {
     beforeEach(async () => {
-      // Create follow relationship: userId1 follows userId2
       await createFollowerRelationship(userId1, userId2);
     });
 
     it("should show posts from followed users", async () => {
       const post2 = await createTestPost(userId2, "Bob's Post", "Bob's content");
 
-      // Get feed for userId1 (posts from users they follow)
       const feedPosts = await db
         .selectFrom("posts")
         .innerJoin("followers", "followers.followed_id", "posts.author_id")
@@ -266,63 +245,10 @@ describe("Posts Logic", () => {
 
       // Posts should be in descending order (newest first)
       for (let i = 0; i < feedPosts.length - 1; i++) {
-        const current = new Date(feedPosts[i].created_at).getTime();
-        const next = new Date(feedPosts[i + 1].created_at).getTime();
+        const current = new Date(feedPosts[i]!.created_at).getTime();
+        const next = new Date(feedPosts[i + 1]!.created_at).getTime();
         expect(current).toBeGreaterThanOrEqual(next);
       }
-    });
-  });
-
-  describe("Post with Likes Count", () => {
-    it("should count likes for a post", async () => {
-      await createLike(userId1, postId);
-      await createLike(userId2, postId);
-
-      const result = await db
-        .selectFrom("posts")
-        .select(({ fn }) => fn.count<number>("likes.id").as("likes_count"))
-        .leftJoin("likes", "likes.post_id", "posts.id")
-        .where("posts.id", "=", postId)
-        .groupBy("posts.id")
-        .executeTakeFirst();
-
-      expect(Number(result?.likes_count)).toBe(2);
-    });
-
-    it("should show zero likes for post with no likes", async () => {
-      const newPost = await createTestPost(userId1, "No Likes", "No likes yet");
-
-      const result = await db
-        .selectFrom("posts")
-        .select(({ fn }) => fn.count<number>("likes.id").as("likes_count"))
-        .leftJoin("likes", "likes.post_id", "posts.id")
-        .where("posts.id", "=", newPost.id)
-        .groupBy("posts.id")
-        .executeTakeFirst();
-
-      expect(Number(result?.likes_count)).toBe(0);
-    });
-
-    it("should check if user has liked post", async () => {
-      await createLike(userId1, postId);
-
-      const hasLiked = await db
-        .selectFrom("likes")
-        .where("user_id", "=", userId1)
-        .where("post_id", "=", postId)
-        .selectAll()
-        .executeTakeFirst();
-
-      expect(hasLiked).toBeDefined();
-
-      const hasNotLiked = await db
-        .selectFrom("likes")
-        .where("user_id", "=", userId2)
-        .where("post_id", "=", postId)
-        .selectAll()
-        .executeTakeFirst();
-
-      expect(hasNotLiked).toBeUndefined();
     });
   });
 

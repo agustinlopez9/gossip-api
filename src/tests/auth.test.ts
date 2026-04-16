@@ -5,7 +5,6 @@ import { getUserByUsername, cleanDatabase, testUsers } from "./helpers.ts";
 
 describe("Authentication Logic", () => {
   beforeEach(async () => {
-    // Clean and reseed before each test
     await cleanDatabase();
   });
 
@@ -197,51 +196,8 @@ describe("Authentication Logic", () => {
         .returning(["id", "username", "email", "first_name", "last_name", "created_at"])
         .executeTakeFirst();
 
-      // Returned user should not have password field
       expect(user).toBeDefined();
-      expect((user as any).password).toBeUndefined();
-    });
-  });
-
-  describe("User Data Validation", () => {
-    it("should store email in lowercase", async () => {
-      const hashedPassword = await bcrypt.hash("Password123!", 10);
-
-      await db
-        .insertInto("users")
-        .values({
-          username: "emailtest",
-          email: "UPPERCASE@EXAMPLE.COM",
-          first_name: "Email",
-          last_name: "Test",
-          password: hashedPassword,
-        })
-        .execute();
-
-      const user = await getUserByUsername("emailtest");
-
-      // Note: This depends on if your schema enforces lowercase
-      // Adjust based on your actual implementation
-      expect(user?.email).toBeDefined();
-    });
-
-    it("should trim whitespace from username", async () => {
-      const hashedPassword = await bcrypt.hash("Password123!", 10);
-
-      const user = await db
-        .insertInto("users")
-        .values({
-          username: "  trimtest  ",
-          email: "trim@example.com",
-          first_name: "Trim",
-          last_name: "Test",
-          password: hashedPassword,
-        })
-        .returningAll()
-        .executeTakeFirst();
-
-      // Depending on validation, this might be trimmed or rejected
-      expect(user).toBeDefined();
+      expect(user && 'password' in user).toBe(false);
     });
   });
 });

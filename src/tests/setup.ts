@@ -1,6 +1,5 @@
-import { db } from "../database/database.ts";
+import { config } from "dotenv";
 
-// Clean up database connection after all tests
-afterAll(async () => {
-  await db.destroy();
-});
+// Load environment variables BEFORE any test files are loaded
+// This ensures database credentials are available when database.ts is imported
+config();

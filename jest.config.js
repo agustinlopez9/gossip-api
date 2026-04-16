@@ -26,5 +26,6 @@ export default {
   ],
   coverageDirectory: "coverage",
   coverageReporters: ["text", "lcov", "html"],
-  setupFilesAfterEnv: ["<rootDir>/src/tests/setup.ts"],
+  setupFiles: ["<rootDir>/src/tests/setup.ts"],
+  setupFilesAfterEnv: ["<rootDir>/src/tests/setupAfterEnv.ts"],
 };

@@ -1,5 +1,14 @@
 import { db } from "../database/database.ts";
 import bcrypt from "bcryptjs";
+import type { Selectable, Insertable } from "kysely";
+import type { Users, Posts, Followers, Likes } from "../types.ts";
+
+export type SelectableUser = Selectable<Users>;
+export type SelectablePost = Selectable<Posts>;
+export type SelectableFollower = Selectable<Followers>;
+export type SelectableLike = Selectable<Likes>;
+export type InsertableUser = Insertable<Users>;
+export type PublicUser = Omit<SelectableUser, "password">;
 
 export const testUsers = {
   alice: {
@@ -39,7 +48,7 @@ export const testUsers = {
   },
 };
 
-export async function getUserByUsername(username) {
+export async function getUserByUsername(username: string): Promise<SelectableUser | undefined> {
   return await db
     .selectFrom("users")
     .selectAll()
@@ -47,7 +56,7 @@ export async function getUserByUsername(username) {
     .executeTakeFirst();
 }
 
-export async function getUserById(id) {
+export async function getUserById(id: number): Promise<SelectableUser | undefined> {
   return await db
     .selectFrom("users")
     .selectAll()
@@ -55,7 +64,7 @@ export async function getUserById(id) {
     .executeTakeFirst();
 }
 
-export async function getPostById(id) {
+export async function getPostById(id: number): Promise<SelectablePost | undefined> {
   return await db
     .selectFrom("posts")
     .selectAll()
@@ -63,7 +72,7 @@ export async function getPostById(id) {
     .executeTakeFirst();
 }
 
-export async function createTestUser(userData) {
+export async function createTestUser(userData: InsertableUser): Promise<SelectableUser> {
   const hashedPassword = await bcrypt.hash(userData.password, 10);
   const user = await db
     .insertInto("users")
@@ -77,7 +86,7 @@ export async function createTestUser(userData) {
   return user;
 }
 
-export async function createTestPost(authorId, title, content) {
+export async function createTestPost(authorId: number, title: string, content: string): Promise<SelectablePost> {
   return await db
     .insertInto("posts")
     .values({
@@ -89,7 +98,7 @@ export async function createTestPost(authorId, title, content) {
     .executeTakeFirstOrThrow();
 }
 
-export async function createFollowerRelationship(followerId, followedId) {
+export async function createFollowerRelationship(followerId: number, followedId: number): Promise<SelectableFollower> {
   return await db
     .insertInto("followers")
     .values({
@@ -100,7 +109,7 @@ export async function createFollowerRelationship(followerId, followedId) {
     .executeTakeFirstOrThrow();
 }
 
-export async function createLike(userId, postId) {
+export async function createLike(userId: number, postId: number): Promise<SelectableLike> {
   return await db
     .insertInto("likes")
     .values({

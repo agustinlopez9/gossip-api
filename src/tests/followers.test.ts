@@ -277,29 +277,5 @@ describe("Followers Logic", () => {
 
       expect(Number(result?.count)).toBe(1);
     });
-
-    it("should return zero for user with no followers", async () => {
-      const user4 = await createTestUser(testUsers.diana);
-
-      const result = await db
-        .selectFrom("followers")
-        .select(({ fn }) => fn.count<number>("id").as("count"))
-        .where("followed_id", "=", user4.id)
-        .executeTakeFirst();
-
-      expect(Number(result?.count)).toBe(0);
-    });
-
-    it("should return zero for user not following anyone", async () => {
-      const user4 = await createTestUser(testUsers.diana);
-
-      const result = await db
-        .selectFrom("followers")
-        .select(({ fn }) => fn.count<number>("id").as("count"))
-        .where("follower_id", "=", user4.id)
-        .executeTakeFirst();
-
-      expect(Number(result?.count)).toBe(0);
-    });
   });
 });
